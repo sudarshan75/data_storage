@@ -1,0 +1,315 @@
+---
+title: "Untitled"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(dplyr)
+library(DT)
+library(readxl)
+library(plotly)
+library(stringr)
+library(tidyr)
+library(xlsx)
+case1<-read.csv("E:/data visualization/DV- Case Study/Source_wise_Addmission_1.csv")
+case2<-read_xlsx("E:/data visualization/DV- Case Study/Success Rate-Q2.xlsx",sheet="success-rate")
+case3<-read_xlsx("E:/data visualization/DV- Case Study/Caller Details(2).xlsx",sheet = "LeadToSuccess")
+case4<-read_xlsx("E:/data visualization/DV- Case Study/Caller Details(1).xlsx")
+april <- read_excel("E:/data visualization/DV- Case Study/Case Study/April Leads.xlsx", sheet = 2)
+april_rev <- read_excel("E:/data visualization/DV- Case Study/Case Study/April 2017_Revenue sheet.xlsx", sheet = 1)
+march <- read_excel("E:/data visualization/DV- Case Study/Case Study/March Leads.xlsx", sheet = 2)
+march_rev <- read_excel("E:/data visualization/DV- Case Study/Case Study/March 2017_Revenue sheet.xlsx", sheet = 1)
+may <- read_excel("E:/data visualization/DV- Case Study/Case Study/May leads.xlsx",sheet = 2)
+may_rev <- read_excel("E:/data visualization/DV- Case Study/Case Study/May 2017_Revenue sheet.xlsx", sheet = 1)
+```
+
+
+Marketing Source {data-orientation=rows data-navmenu=Output}
+===============================================================
+
+
+rows
+-------------------------------------
+###Best Marketing Source
+
+```{r}
+val=case1$Source.Name[1]
+valueBox(val)
+```
+
+###Enroll COunt
+```{r}
+val=case1$Enroll_count[1]
+valueBox(val)
+```
+
+
+colums {data-width=500}
+------------------------------------------
+```{r}
+datatable(case1,options = list(bPaginate=T,lengthMenu=c(10,20,30)))
+```
+
+
+```{r}
+case1%>%head(10)%>%ggplot(aes(x=Source.Name,y=Enroll_count))+
+  geom_bar(stat = "identity",aes(fill=Source.Name))+theme_bw()+
+  labs(subtitle="Top 10 Marketing source", 
+               y="Count of enrollment", x="Source Name", title="Bar Plot", 
+               caption = "Source: Manipal_Prolearn")+
+  theme(axis.text.x = element_blank(),axis.ticks.x = element_blank(),axis.ticks.y = element_blank(),legend.title = element_blank(),legend.position = "bottom")
+```
+
+
+
+Product {data-orientation=rows data-navmenu=Output}
+=====================================================
+
+rows
+-----------------------------------------------
+
+
+###leads
+```{r}
+val=case2$Leads[4]
+valueBox(val)
+```
+
+
+
+rows
+------------------------------------------
+```{r}
+case2$`Success Rate`<-NULL
+case2%>%mutate(percentage=round(convert/leads*100,2))%>%datatable(case2,options = list(bPaginate=T,lengthMenu=c(10,20,30)))
+```
+
+
+
+
+Work Force {data-orientation=rows data-navmenu=Output}
+=======================================================
+
+
+
+rows
+------------------------------------------
+
+
+###Average leads converted to success
+```{r}
+val=case3%>%mutate(percentage=(Success/Leads*100))%>%summarise(round(mean(percentage,na.rm = T),0))
+valueBox(val)
+```
+
+
+
+
+###Employee Name
+```{r}
+val="Kiran Gowda"
+valueBox(val)
+```
+
+
+
+columns
+--------------------------------------------------
+
+
+
+```{r}
+case3$Percentage=NULL
+case3%>%mutate(percentage=round(Success/Leads*100,2))%>%arrange(-percentage)%>%datatable(case3,options = list(bPaginate=T,lengthMenu=c(10,20,30)))
+```
+
+
+
+
+Call Center {data-orientation=columns data-navmenu=Output}
+=======================================================
+```{r}
+# April Revenue
+april_rev_new <- april_rev[complete.cases(april_rev$Location),]
+
+april_rev_new <- april_rev_new %>% select(`Order Email`,Location,`Student Name`,`Mobile Number`,`Course Title`)
+
+
+april_rev_new$`Order Email` <- as.character(april_rev_new$`Order Email`)
+april_rev_new$Location <- as.character(april_rev_new$Location)
+april_rev_new$`Student Name` <- as.character(april_rev_new$`Student Name`)
+april_rev_new$`Mobile Number` <- as.numeric(as.character(april_rev_new$`Mobile Number`))
+april_rev_new$`Course Title` <- as.character(april_rev_new$`Course Title`)
+
+
+april_rev_new$Location <- toupper(april_rev_new$Location)
+
+april_rev_count <- april_rev_new %>% group_by(Location) %>% summarise(Count = n()) %>% as.data.frame()
+april_rev_count$Month <- "April"
+
+# April Lead
+april_lead <- april %>% select(City,Name,Email,Course,Status)
+
+april_lead_new <- april_lead[complete.cases(april_lead$City),]
+
+
+april_lead_new$City <- toupper(april_lead_new$City)
+
+april_lead_count <- april_lead_new %>% 
+  filter(Status %in% c("Call Back","Interested/Follow Up","Admission Taken")) %>% 
+  group_by(City,Status) %>% summarise(Count = n()) %>% as.data.frame()
+
+```
+
+```{r}
+# March Revenue
+march_rev_new <- march_rev[complete.cases(march_rev$Location),]
+march_rev_new <- march_rev %>% select(`Order Email`,Location,`Student Name`,`Mobile Number`,`Course Title`)
+
+march_rev_new$`Order Email` <- as.character(march_rev_new$`Order Email`)
+march_rev_new$Location <- as.character(march_rev_new$Location)
+march_rev_new$`Student Name` <- as.character(march_rev_new$`Student Name`)
+march_rev_new$`Mobile Number` <- as.numeric(as.character(march_rev_new$`Mobile Number`))
+march_rev_new$`Course Title` <- as.character(march_rev_new$`Course Title`)
+
+march_rev_new$Location <- toupper(march_rev_new$Location)
+
+march_rev_count <- march_rev_new %>% group_by(Location) %>% summarise(Count = n()) %>% as.data.frame()
+march_rev_count <- march_rev_count[1:(nrow(march_rev_count)-1),]
+
+march_rev_count$Month <- "March"
+# March Lead
+march_lead <- march %>% select(City,Name,Email,Course,Status)
+
+
+march_lead_new <- march_lead[complete.cases(march_lead$City),]
+
+march_lead_new$City <- toupper(march_lead_new$City)
+
+march_lead_count <- march_lead_new %>% 
+  filter(Status %in% c("Call Back","Interested/Follow Up","Admission Taken")) %>%
+  group_by(City,Status) %>% summarise(Count = n()) %>% as.data.frame()
+
+```
+
+```{r}
+# May Revenue
+may_rev_new <- may_rev[complete.cases(may_rev$Location),]
+may_rev_new <- may_rev %>% select(`Order Email`,Location,`Student Name`,`Mobile Number`,`Course Title`)
+
+may_rev_new$`Order Email` <- as.character(may_rev_new$`Order Email`)
+may_rev_new$Location <- as.character(may_rev_new$Location)
+may_rev_new$`Student Name` <- as.character(may_rev_new$`Student Name`)
+may_rev_new$`Mobile Number` <- as.numeric(as.character(may_rev_new$`Mobile Number`))
+may_rev_new$`Course Title` <- as.character(may_rev_new$`Course Title`)
+
+may_rev_new$Location <- toupper(may_rev_new$Location)
+
+may_rev_count <- may_rev_new %>% group_by(Location) %>% summarise(Count = n()) %>% as.data.frame()
+may_rev_count <- may_rev_count[1:(nrow(may_rev_count)-1),]
+may_rev_count$Month <- "May"
+
+# May Lead
+may_lead <- may %>% select(City,Name,Email,Course,Status)
+
+
+may_lead_new <- may_lead[complete.cases(may_lead$City),]
+
+may_lead_new$City <- toupper(may_lead_new$City)
+
+may_lead_count <- may_lead_new %>% 
+  filter(Status %in% c("Call Back","Interested/Follow Up","Admission Taken")) %>%
+  group_by(City,Status) %>% summarise(Count = n()) %>% as.data.frame()
+
+```
+
+
+```{r}
+#==================LEAD COUNT=================#
+
+april_lead_count2 <- april_lead_count[which(april_lead_count$City %in% c(april_rev_count$Location,march_rev_count$Location,may_rev_count$Location)),]
+april_lead_count2$Month <- "April"
+
+march_lead_count2 <- march_lead_count[which(march_lead_count$City %in% c(april_rev_count$Location,march_rev_count$Location,may_rev_count$Location)),]
+march_lead_count2$Month <- "March"
+
+may_lead_count2 <- may_lead_count[which(may_lead_count$City %in% c(april_rev_count$Location,march_rev_count$Location,may_rev_count$Location)),]
+may_lead_count2$Month <- "May"
+```
+
+```{r}
+#====================COMBINE FILES===================#
+
+revenue <- rbind(march_rev_count,april_rev_count,may_rev_count)
+lead <- rbind(march_lead_count2,april_lead_count2,may_lead_count2)
+
+revenue$Month <- factor(revenue$Month, levels = c("March","April","May"))
+lead$Month <- factor(lead$Month, levels = c("March","April","May"))
+
+revenue <- revenue %>% filter(!Location == "REMOTE")
+lead <- lead %>% filter(!City == "REMOTE")
+
+rownames(revenue) <- 1:nrow(revenue)
+rownames(lead) <- 1:nrow(lead)
+
+lead_overall <- lead %>% group_by(City,Month) %>% summarise(Overall = sum(Count))
+lead_overall$Type = "Lead"
+lead_overall <- as.data.frame(lead_overall)
+lead_overall$Month <- factor(lead_overall$Month, levels = c("March","April","May"))
+
+newdf <- data.frame(City = revenue$Location, Month = revenue$Month, Overall = revenue$Count)
+newdf$Type = "Revenue"
+newdf$City <- as.character(newdf$City)
+
+newdf <- rbind(newdf, lead_overall)
+
+newdf$Month <- factor(newdf$Month, levels = c("March","April","May"))
+
+```
+
+
+
+columns {data-width=500}
+-------------------------------------
+
+
+```{r}
+plot_ly(lead, x = ~City, y = ~Count, frame = ~Month,
+        type = "bar", name = ~Status) %>% 
+  layout(barmode = "stack",
+         title = "No of students who were interested",
+         xaxis = list(title = ""),
+         yaxis = list(title = ""))
+```
+
+
+
+
+
+columns
+----------------------------------------------
+
+```{r}
+plot_ly(revenue, x = ~Location, y = ~Count, frame = ~Month,
+        type = "bar", text = ~Count, marker = list(color = rainbow(10))) %>% 
+  layout(title = "Students joined wrt to location",
+         xaxis = list(title = ""),
+         yaxis = list(title = ""))
+```
+
+
+
+```{r}
+plot_ly(newdf, x = ~City, y = ~Overall, frame = ~Month, type = "bar", name = ~Type) %>% 
+  layout(barmode = "group",
+         title = "Comparison of leads who were interested and who actually took admission",
+         xaxis = list(title = ""),
+         yaxis = list(title = ""))
+```
+
